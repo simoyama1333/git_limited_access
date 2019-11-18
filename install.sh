@@ -1,0 +1,3 @@
+go get -u github.com/labstack/echo/...
+go get -u github.com/golang/dep/cmd/dep
+dep init
