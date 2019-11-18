@@ -3,6 +3,7 @@ package main
 import (
     "flag"
 	"fmt"
+	"time"
 	"net/http"
 	"io/ioutil"
 	"encoding/json"
@@ -46,9 +47,15 @@ type GitFIle struct {
 }
 type FileOrDir struct {
 	Name string
-	Path string
+	Path string 
 	TypeFile bool
 	Files []FileOrDir
+}
+type Repo struct{
+	Name string
+	Expire time.time
+	ExpireFlag bool
+	Json string
 }
 
 var token string
@@ -65,15 +72,15 @@ func main() {
 
 	var username string = "simoyama1333"
 	repourl = "https://api.github.com/repos/" + username + "/" + reponame + "/"
-	/*
-	var gitFirtUrl := repourl + "contents?access_token=" + token
+	
+	gitFirstUrl := repourl + "contents?access_token=" + token
 	fmt.Println("Now crawling")
 	contents := GetContentsJson(gitFirstUrl)
 	data := ContentsToDataRecursively(contents)
-	fmt.Println(data)
-	*/
-	a := GetFileAndDecode("README.md")
-	fmt.Println(a)
+	//fmt.Println(data)
+	repojson, _ := string(json.Marshal(data))
+	//a := GetFileAndDecode("README.md")
+	//fmt.Println(a)
 
 
 }
