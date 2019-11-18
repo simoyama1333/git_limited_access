@@ -6,6 +6,7 @@ import (
     "time"
 
     "go.mongodb.org/mongo-driver/bson"
+    "go.mongodb.org/mongo-driver/mongo"
     "go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -69,7 +70,7 @@ func insertStruct(col *mongo.Collection) error {
 }
 
 func mainMain() error {
-    client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
+    client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://root:mongo@mongodb:27017"))
     if err != nil {
         return err
     }
