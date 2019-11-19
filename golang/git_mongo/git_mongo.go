@@ -68,7 +68,8 @@ const GitAPIURL string = "https://api.github.com/repos/"
 var token string
 var repourl string
 
-func RepoCrawl(username string,reponame string,token string,expire string,password string) {
+func RepoCrawl(username string,_token string,reponame string,expire string,password string) {
+	token = _token
 	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://root:mongo@mongodb:27017"))
     if err != nil {
         panic(err)
@@ -108,7 +109,11 @@ func RepoCrawl(username string,reponame string,token string,expire string,passwo
 		password,
 		string(repojson),
 	}
-
+	err = RepoCheckAndDelete(reponame)
+	//nodocumentは正常
+	if (err != mongo.ErrNoDocuments) && (err != nil) {
+        panic(err)
+	}
 	repoinfo := client.Database(DBName).Collection(ColRepoInfo)
 	_, err = repoinfo.InsertOne(context.Background(), doc)
     if err != nil {
@@ -161,6 +166,30 @@ func GetRepoInfo(reponame string) (RepoInfo,error){
 	return doc,nil
 }
 
+func RepoCheckAndDelete(reponame string) error{
+	var doc RepoInfo
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://root:mongo@mongodb:27017"))
+    if err != nil {
+        return err
+    }
+    if err = client.Connect(context.Background()); err != nil {
+        return err
+    }
+	defer client.Disconnect(context.Background())
+
+	repoinfo := client.Database(DBName).Collection(ColRepoInfo)
+	findOptions := options.FindOne()
+    err = repoinfo.FindOne(context.Background(), bson.D{{"name",reponame}},findOptions).Decode(&doc)
+    if err != nil {
+        return err
+	}
+	//存在している場合は削除 存在しない場合は上でエラーが帰っている
+	_, err = repoinfo.DeleteOne(context.Background(), bson.D{{"name",reponame}})
+	if err != nil {
+		return err
+	}
+	return nil
+}
 //gitのファイルを再帰的に取得
 func ContentsToDataRecursively(contents []GitJson) []FileOrDir{
 	var data []FileOrDir
@@ -208,7 +237,6 @@ func GetContentsJson(giturl string) []GitJson {
 //gitのファイルをAPIから取得する場合、Base64デコードが必要となる
 func GetFileAndDecode(path string,token string) string{
 	giturl := repourl + "contents/" + path + "?access_token=" + token
-	fmt.Println(giturl)
 	resp, err := http.Get(giturl)
 	if err != nil {
 		panic(err)
