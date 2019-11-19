@@ -1,7 +1,6 @@
-package main
+package git_mongo
 
 import (
-    "flag"
 	"fmt"
 	"time"
 	"net/http"
@@ -9,6 +8,10 @@ import (
 	"encoding/json"
 	"strings"
 	"encoding/base64"
+	"context"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+    "go.mongodb.org/mongo-driver/mongo/options"
 )
 //by https://mholt.github.io/json-to-go/
 type GitJson struct {
@@ -51,39 +54,113 @@ type FileOrDir struct {
 	TypeFile bool
 	Files []FileOrDir
 }
-type Repo struct{
+type RepoInfo struct{
 	Name string
-	Expire time.time
+	Expire time.Time
 	ExpireFlag bool
+	Password string
 	Json string
 }
+const DBName string = "git_limited"
+const ColRepoInfo string = "repoinfo"
+const GitAPIURL string = "https://api.github.com/repos/"
 
 var token string
 var repourl string
 
-func main() {
-    flag.Parse()
-	if len(flag.Args()) == 0 {
-		fmt.Println("Put repository name")
-		return 
-	}
-	reponame := flag.Args()[0]
-	token = "ab242b969e1b170b4966267ff24fe9cf5b538596"
+func RepoCrawl(username string,reponame string,token string,expire string,password string) {
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://root:mongo@mongodb:27017"))
+    if err != nil {
+        panic(err)
+    }
+    if err = client.Connect(context.Background()); err != nil {
+        panic(err)
+    }
+	defer client.Disconnect(context.Background())
 
-	var username string = "simoyama1333"
-	repourl = "https://api.github.com/repos/" + username + "/" + reponame + "/"
-	
+
+	repourl =  GitAPIURL + username + "/" + reponame + "/"
 	gitFirstUrl := repourl + "contents?access_token=" + token
-	fmt.Println("Now crawling")
+	fmt.Println("Now crawling repository ")
 	contents := GetContentsJson(gitFirstUrl)
 	data := ContentsToDataRecursively(contents)
-	//fmt.Println(data)
-	repojson, _ := string(json.Marshal(data))
-	//a := GetFileAndDecode("README.md")
-	//fmt.Println(a)
+	fmt.Println("Crawling repository is end")
+	repojson, _ := json.Marshal(data)
 
+	var expiretime time.Time
+	var expireflag bool
+	if expire == ""{
+		expiretime = time.Now()
+		expireflag = false
+	}else{
+		layout := "2006-01-02"
+		expiretime, err = time.Parse(layout, expire)
+		if err != nil {
+			panic(err)
+		}
+		expireflag = true
+	}
+
+    doc := RepoInfo {
+        reponame,
+        expiretime,
+        expireflag,
+		password,
+		string(repojson),
+	}
+
+	repoinfo := client.Database(DBName).Collection(ColRepoInfo)
+	_, err = repoinfo.InsertOne(context.Background(), doc)
+    if err != nil {
+        panic(err)
+	}
+	fmt.Println("End")
 
 }
+func RepoList() ([]RepoInfo,error){
+	var doc []RepoInfo
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://root:mongo@mongodb:27017"))
+    if err != nil {
+        return doc,err
+    }
+    if err = client.Connect(context.Background()); err != nil {
+        return doc,err
+    }
+	defer client.Disconnect(context.Background())
+
+	repoinfo := client.Database(DBName).Collection(ColRepoInfo)
+    findOptions := options.Find().SetSort(bson.D{{"name",1}})
+    cur, err := repoinfo.Find(context.Background(), bson.D{{}},findOptions)
+    if err != nil {
+        return doc,err
+	}
+
+    if err = cur.All(context.Background(),&doc); err != nil {
+        return doc,err
+	}
+	return doc,nil
+}
+//Repo単一を返す
+func GetRepoInfo(reponame string) (RepoInfo,error){
+	var doc RepoInfo
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://root:mongo@mongodb:27017"))
+    if err != nil {
+        return doc,err
+    }
+    if err = client.Connect(context.Background()); err != nil {
+        return doc,err
+    }
+	defer client.Disconnect(context.Background())
+
+	repoinfo := client.Database(DBName).Collection(ColRepoInfo)
+	findOptions := options.FindOne()
+    err = repoinfo.FindOne(context.Background(), bson.D{{"name",reponame}},findOptions).Decode(&doc)
+    if err != nil {
+        return doc,err
+	}
+	return doc,nil
+}
+
 //gitのファイルを再帰的に取得
 func ContentsToDataRecursively(contents []GitJson) []FileOrDir{
 	var data []FileOrDir
@@ -105,7 +182,6 @@ func ContentsToDataRecursively(contents []GitJson) []FileOrDir{
 	}
 	return data
 }
-
 func GetContentsJson(giturl string) []GitJson {
 	resp, err := http.Get(giturl)
 	if err != nil {
@@ -130,7 +206,7 @@ func GetContentsJson(giturl string) []GitJson {
 
 
 //gitのファイルをAPIから取得する場合、Base64デコードが必要となる
-func GetFileAndDecode(path string) string{
+func GetFileAndDecode(path string,token string) string{
 	giturl := repourl + "contents/" + path + "?access_token=" + token
 	fmt.Println(giturl)
 	resp, err := http.Get(giturl)
