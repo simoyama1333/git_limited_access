@@ -1,0 +1,37 @@
+version: "3"
+services:
+  web:
+    #image: git_limited
+    image: golang
+    volumes:
+      - ./golang:/go/src/git_limited_access
+    container_name: git_limited
+    ports:
+      - "80:80"
+    tty: true
+    privileged: true
+    links:
+      - mongo
+  mongo:
+    image: mongo:latest
+    restart: always
+    container_name: mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: mongo
+    ports:
+      - 27017:27017
+    volumes:
+      - ./mongodata/db:/data/db
+      - ./mongodata/configdb:/data/configdb
+  mongo-express:
+    container_name: mongo-express
+    links:
+      - mongo
+    ports:
+      - '8081:8081'
+    environment:
+      - 'ME_CONFIG_OPTIONS_EDITORTHEME=ambiance'
+      - 'ME_CONFIG_BASICAUTH_USERNAME=root'
+      - 'ME_CONFIG_BASICAUTH_PASSWORD=mongo'
+    image: mongo-express
