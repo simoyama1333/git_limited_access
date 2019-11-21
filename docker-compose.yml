@@ -7,7 +7,7 @@ services:
       - ./:/go/src/git_limited_access
     container_name: git_limited
     ports:
-      - "8080:8080"
+      - "80:80"
     tty: true
     privileged: true
     links:
