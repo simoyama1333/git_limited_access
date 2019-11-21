@@ -2,7 +2,7 @@ package main
 import (
 	"fmt"
 	"flag"
-	"git_limited_access/golang/git_mongo"
+	"git_limited_access/git_mongo"
 	"os"
 )
 

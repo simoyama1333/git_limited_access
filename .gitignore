@@ -1,0 +1,4 @@
+golang/Gopkg.lock
+golang/Gopkg.toml
+golang/vendor
+mongodata/
