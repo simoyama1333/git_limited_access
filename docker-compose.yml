@@ -2,12 +2,12 @@ version: "3"
 services:
   web:
     #image: git_limited
-    image: golang
+    image: go_react
     volumes:
-      - ./golang:/go/src/git_limited_access
+      - ./:/go/src/git_limited_access
     container_name: git_limited
     ports:
-      - "80:80"
+      - "8080:8080"
     tty: true
     privileged: true
     links:
@@ -24,14 +24,3 @@ services:
     volumes:
       - ./mongodata/db:/data/db
       - ./mongodata/configdb:/data/configdb
-  mongo-express:
-    container_name: mongo-express
-    links:
-      - mongo
-    ports:
-      - '8081:8081'
-    environment:
-      - 'ME_CONFIG_OPTIONS_EDITORTHEME=ambiance'
-      - 'ME_CONFIG_BASICAUTH_USERNAME=root'
-      - 'ME_CONFIG_BASICAUTH_PASSWORD=mongo'
-    image: mongo-express

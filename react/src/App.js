@@ -40,10 +40,10 @@ class GitHubLink extends Component {
     this.state = { link : "" }
   }
   componentDidMount (){
-    axios.get('https://localhost/')
+    axios.get('https://localhost/username')
     .then(response => {
       console.log(response.data);
-      this.setState({aja : "ue-i"});
+      this.setState({link : response.data.username});
 
    // catchでエラー時の挙動を定義する
     }).catch(err => {

@@ -1,5 +1,6 @@
 docker pull golang
 docker pull mongo
-mkdir mongodata/
-mkdir mongodata/db
-mkdir mongodata/configdb
+docker build -t go_react ./
+mkdir -p mongodata/
+mkdir -p mongodata/db
+mkdir -p mongodata/configdb
