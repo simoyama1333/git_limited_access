@@ -41,7 +41,18 @@ nav a {
   margin-top:10px;
   margin-left: 20px;
 }
-.lock{
+.icon{
   width:15px;
   height:15px;
+}
+ui {
+  list-style: none;
+  color: #108db8;
+}
+li {
+  list-style: none;
+  color: #108db8;
+}
+.dir{
+  display:none;
 }
