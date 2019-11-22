@@ -56,3 +56,7 @@ li {
 .dir{
   display:none;
 }
+.code{
+  margin-left: 10%;
+  margin-right: 10%;
+}
