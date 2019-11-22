@@ -1,4 +1,5 @@
 golang/Gopkg.lock
 golang/Gopkg.toml
+golang/echo.log
 golang/vendor
 mongodata/

@@ -5,6 +5,7 @@ services:
     image: go_react
     volumes:
       - ./:/go/src/git_limited_access
+      - ./default.conf:/etc/nginx/conf.d/default.conf
     container_name: git_limited
     ports:
       - "80:80"

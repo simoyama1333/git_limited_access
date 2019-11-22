@@ -1,4 +1,4 @@
-import logo from './logo.svg';
+import lock from './lock.png';
 import './App.css';
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom';
@@ -17,13 +17,16 @@ const Topics = () => {
 class Repos extends Component {
   constructor(props) {
     super(props);
-    this.state = { link : "aaa" }
+    this.state = { repolist : null ,username : null}
   }
   componentDidMount (){
-    axios.get('https://jsonplaceholder.typicode.com/posts')
+    axios.get('/api/repolist')
     .then(response => {
       console.log(response.data);
-      this.setState({aja : "ue-i"});
+      this.setState({
+        repolist :  response.data.repolist,
+        username :  response.data.username
+      });
 
    // catchでエラー時の挙動を定義する
     }).catch(err => {
@@ -31,19 +34,42 @@ class Repos extends Component {
     });
   }
   render(){
-    return (<div>{this.state.link}</div>)
+    if(this.state.repolist == null){
+      return (<div>loading...</div>)
+    }else{
+      var list = [];
+      {this.state.repolist.map((i) => {
+        console.log(i);
+        list.push(
+          <li>
+            {i.password_flag && <img src={lock} class="lock"></img>}
+            <Link to={"/repodetail/" + i.name}>{i.name}</Link> 
+            &nbsp;&nbsp;&nbsp;  
+            {i.expire_flag && <span>閲覧期限:{i.expire}まで</span>}
+          </li>
+          );
+      })}
+
+      return (
+        <div>
+        <h3>{this.state.username}'s Repository</h3>
+        {list}
+      </div>
+        )
+    }
+    
   }
 }
 class GitHubLink extends Component {
   constructor(props) {
     super(props);
-    this.state = { link : "" }
+    this.state = { link : null }
   }
   componentDidMount (){
-    axios.get('https://localhost/username')
+    axios.get('/api/username')
     .then(response => {
       console.log(response.data);
-      this.setState({link : response.data.username});
+      this.setState({link : "https://github.com/" + response.data.username });
 
    // catchでエラー時の挙動を定義する
     }).catch(err => {
@@ -51,7 +77,12 @@ class GitHubLink extends Component {
     });
   }
   render(){
-    return (<div>{this.state.link}</div>)
+    if(this.state.link){
+      return (<a href={this.state.link}>GitHub</a>)
+    }else{
+      return (<div></div>)
+    }
+    
   }
 }
 
