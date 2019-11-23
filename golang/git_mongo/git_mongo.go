@@ -11,7 +11,10 @@ import (
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-    "go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"strconv"
+	"crypto/sha256"
+	"encoding/hex"
 )
 //by https://mholt.github.io/json-to-go/
 type GitJson struct {
@@ -61,12 +64,17 @@ type RepoInfo struct{
 	Password string
 	Json string
 }
+type LoginToken struct{
+	Reponame string
+	Expire time.Time
+	Token string
+}
 const DBName string = "git_limited"
 const ColRepoInfo string = "repoinfo"
+const ColLoginToken string = "logintoken"
 const GitAPIURL string = "https://api.github.com/repos/"
 
 var token string
-var repourl string
 
 func RepoCrawl(username string,_token string,reponame string,expire string,password string) {
 	token = _token
@@ -80,7 +88,7 @@ func RepoCrawl(username string,_token string,reponame string,expire string,passw
 	defer client.Disconnect(context.Background())
 
 
-	repourl =  GitAPIURL + username + "/" + reponame + "/"
+	repourl :=  GitAPIURL + username + "/" + reponame + "/"
 	gitFirstUrl := repourl + "contents?access_token=" + token
 	fmt.Println("Now crawling repository ")
 	contents := GetContentsJson(gitFirstUrl)
@@ -106,7 +114,7 @@ func RepoCrawl(username string,_token string,reponame string,expire string,passw
         reponame,
         expiretime,
         expireflag,
-		password,
+		toHash(password),
 		string(repojson),
 	}
 	err = RepoCheckAndDelete(reponame)
@@ -165,7 +173,92 @@ func GetRepoInfo(reponame string) (RepoInfo,error){
 	}
 	return doc,nil
 }
+func CheckExistLoginToken(reponame string,token string) bool{
+	var doc LoginToken
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://root:mongo@mongodb:27017"))
+    if err != nil {
+        return false
+	}
+	if err = client.Connect(context.Background()); err != nil {
+        return false
+    }
+	defer client.Disconnect(context.Background())
 
+	tokencol := client.Database(DBName).Collection(ColLoginToken)
+	findOptions := options.FindOne()
+	b := bson.D{{"reponame",reponame},{"token",token}}
+	err = tokencol.FindOne(context.Background(),b,findOptions).Decode(&doc)
+	//ない場合はfalse
+    if err == mongo.ErrNoDocuments {
+        return false
+	}
+	//期限切れの場合は削除
+	if(time.Now().Unix() > doc.Expire.Unix()){
+		_, err = tokencol.DeleteOne(context.Background(),b)
+		if err != nil {
+			return false
+		}
+		return false
+	}
+	if(doc.Token == token){
+		return true
+	}
+	return false
+}
+func toHash(password string) string {
+    converted := sha256.Sum256([]byte(password))
+    return hex.EncodeToString(converted[:])
+}
+func PasswordAuth(reponame string,ps string) bool {
+	var doc RepoInfo
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://root:mongo@mongodb:27017"))
+    if err != nil {
+        return false
+	}
+	if err = client.Connect(context.Background()); err != nil {
+        return false
+    }
+	defer client.Disconnect(context.Background())
+
+	repocol := client.Database(DBName).Collection(ColRepoInfo)
+	findOptions := options.FindOne()
+	b := bson.D{{"name",reponame}}
+	err = repocol.FindOne(context.Background(),b,findOptions).Decode(&doc)
+	if err != nil {
+		return false
+	}
+	if doc.Password == toHash(ps) {
+		return true
+	}else{
+		return false
+	}
+}
+func InsertToken(reponame string) (string,error){
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://root:mongo@mongodb:27017"))
+	if err != nil {
+        return "",err
+	}
+	if err = client.Connect(context.Background()); err != nil {
+        return "",err
+    }
+	defer client.Disconnect(context.Background())
+
+	str := strconv.FormatInt(time.Now().Unix(),10) + reponame
+	token := toHash(str)
+	//expire next month
+    doc := LoginToken {
+        reponame,
+        time.Now().AddDate(0,1,0),
+		token,
+	}
+
+	tokencol := client.Database(DBName).Collection(ColLoginToken)
+	_, err = tokencol.InsertOne(context.Background(), doc)
+    if err != nil {
+        return "",err
+	}
+	return token,nil
+}
 func RepoCheckAndDelete(reponame string) error{
 	var doc RepoInfo
 	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://root:mongo@mongodb:27017"))
@@ -235,17 +328,18 @@ func GetContentsJson(giturl string) []GitJson {
 
 
 //gitのファイルをAPIから取得する場合、Base64デコードが必要となる
-func GetFileAndDecode(path string,token string) string{
+func GetFileAndDecode(path string,username string,reponame string, token string) string {
+	repourl :=  GitAPIURL + username + "/" + reponame + "/"
 	giturl := repourl + "contents/" + path + "?access_token=" + token
 	resp, err := http.Get(giturl)
 	if err != nil {
-		panic(err)
+		return ""
 	}
   
 	defer resp.Body.Close()
 	byteArray, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		panic(err)
+		return ""
 	}
 
 	jsonBytes := ([]byte)(byteArray)
@@ -253,15 +347,12 @@ func GetFileAndDecode(path string,token string) string{
 	var data GitFIle
 
     if err := json.Unmarshal(jsonBytes, &data); err != nil {
-		panic(err)
+		return ""
 	}
-	fmt.Println(data)
 
 	encoded64 := strings.Replace(data.Content, "\n", "", -1) 
-	fmt.Println(encoded64)
 	retstr, err := base64.StdEncoding.DecodeString(encoded64)
 	if err != nil {
-			fmt.Println("nocontent :", err)
 			return ""
 	}
 	return string(retstr)

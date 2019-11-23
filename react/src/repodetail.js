@@ -4,50 +4,116 @@ import Code from 'react-code-prettify';
 import doc from './doc.png';
 import folder from './folder.png';
 import LoadingOrError from './loading';
+import NoMatch from './404'
+
+const sortBoolDesc = (ary,key) =>{
+  ary.sort((a,b) =>{
+      if(a[key]<b[key]) return -1;
+      if(a[key]>b[key]) return 1;
+      return 0;
+  });
+  return ary;
+}
 
 export default class RepoDetail extends Component {
     constructor(props){
       super(props);
       this.repon =  this.props.match.params.reponame;
-      this.state = {value: '', needauth: true, repotree: null,failed: false};
+      this.clickLimited = false;
+      this.state = {value: '', needauth: true, repotree: null,failed: false,loading: true};
       this.handleSubmit = this.handleSubmit.bind(this);
       this.handleChange = this.handleChange.bind(this);
+      this.handleClick = this.handleClick.bind(this);
+      //this.fetchFile = this.fetchFile.bind(this);
     }
+
     handleChange(event) {
       this.setState({value: event.target.value});
     }
     handleSubmit(event) {
       event.preventDefault();
-      /* axios post
-      success, if newtoken != ""
-      localStrage.setItem(this.repon + "_token",token);
-      this.setState({needauth: false});
-      else
-      this.setState({failed: true});
-      end
-  
-      */
+      axios.post('/api/auth',{
+        reponame: this.repon,
+        password: this.state.value,
+        token: null
+      })
+      .then(response => {
+        let newtoken = response.data.newtoken;
+        this.setState({needauth: false});
+        window.localStorage.setItem(this.repon + "_token",newtoken)
+     // catchでエラー時の挙動を定義する
+      }).catch(err => {
+        if(err.response.status == 401){
+          return this.setState({failed: true});
+        }
+        this.setState({
+          err :  true
+        });
+        console.log('err:', err);
+      });
     }
-    appearDisappear(event){
-      if(event.target.children.length < 2){
+    //click
+    handleClick(event){
+      if(this.clickLimited == true){
         return;
       }
-      if(event.target.children[1].style.display == 'none'){
-        event.target.children[1].style.display = 'block';
+      this.clickLimited  = true;
+
+      let type = event.target.getAttribute("type");
+      //dirの場合開閉
+      if(type == "dir"){
+        let children = event.target.children;
+        if(children < 2){
+          return;
+        }
+        try{
+          if(children[1].style.display != 'block'){
+            children[1].style.display = 'block';
+          }else{
+            children[1].style.display = 'none';
+          };
+        }catch{}
       }else{
-        event.target.children[1].style.display = 'none';
-      };
+        let path = event.target.getAttribute("path");
+        console.log("path " + path);
+      }
+      setTimeout( ()=>{this.clickLimited  = false} ,100);
     }
     
     componentDidMount (){
       let token = localStorage.getItem(this.repon + "_token");
-      if(token){
-        console.log("token aruyo");
-        /* token check ok
-          this.setState({needauth: false});
-          localStrage.setItem(this.repon + "_token",token);
-        */
-      }
+      axios.post('/api/auth',{
+        reponame: this.repon,
+        password: null,
+        token: token
+      })
+      .then(response => {
+        let authresult = response.data.authresult;
+        let code = response.data.readme;
+        let path = response.data.path;
+        let tree = response.data.tree;
+        if(authresult  == true){
+          this.setState({needauth: false,
+             code: code,
+             path: path,
+             tree: tree,
+             loading: false
+            });
+        }
+       // catchでエラー時の挙動を定義する
+      }).catch(err => {
+        if(err.response.status == 404){
+          this.setState({
+            notfound :  true,
+            loading: false
+          });
+          return 
+        }
+        this.setState({
+          err :  true
+        });
+        console.log('err:', err);
+      });
     }
   
     repoAuth(){
@@ -65,46 +131,60 @@ export default class RepoDetail extends Component {
       );
     }
     codeView(){
-      const codeString = `function map(f, a) {
-        var result = [], // Create a new Array
-            i;
-        for (i = 0; i != a.length; i++)
-          result[i] = f(a[i]);
-        return result;
-      };`
+      if(this.state.code == ''){
+        return NoMatch('File');
+      }
       return(
         <div className="code">
           <img src={doc} className="icon"></img>
-          README.mb
-          <Code codeString={codeString}/>
+          {this.state.path}
+          <Code codeString={this.state.code}/>
           </div>
       )
     }
     treeView(){
-        return(<div><ul>
-            <li onClick={this.appearDisappear}><img src={folder} className="icon"></img>親リスト1
-            <ul className="dir">
-              <li><img src={doc} className="icon"></img>子リスト1</li>
-              <li><img src={folder} className="icon"></img>子リスト2
-              <ul className="dir">
-              <li>子リスト31</li>
-              <li>子リスト32</li>
-              <li>子リスト33</li>
-            </ul>
-          
-              </li>
-            </ul>
+        //再帰でtree構造を作る
+        const dig = (ary,i) => {
+          const sorted = sortBoolDesc(ary,"TypeFile");
+          let list = [];
+          i += 1;
+          let first = i == 1 ? "" : "dir"
+          sorted.map((item) =>{
+            let digdig = dig(item.Files);
+            list.push(
+              <span>
+              { item.TypeFile && (
+            <li onClick={this.handleClick} type="file" path={item.Path}>
+            <img src={doc} className="icon"></img>
+            {item.Name}
             </li>
-            <li>親リスト2</li>
-            <li>親リスト3
-          
+          )}
+          {!item.TypeFile && (
+            <li onClick={this.handleClick} type="dir" path={item.Path}>
+            <img src={folder} className="icon"></img>
+            {item.Name}
+            {digdig}
             </li>
-          </ul>
+          )}
+              </span>
+            );
+          }) 
+          return (<ul className={first}>{list}</ul>)
+        }
+        let list = dig(this.state.tree,0);
+        return(<div>
+          {list}
           {this.codeView()}
           </div>
           )
     }
     render(){
+      if(this.state.loading){
+        return LoadingOrError(true);
+      }
+      if(this.state.notfound){
+        return NoMatch();
+      }
       if(this.state.needauth){
         return(<div><h2>{this.repon}</h2>{this.repoAuth()}</div>);
       }else{

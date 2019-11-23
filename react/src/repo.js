@@ -12,12 +12,10 @@ export default class Repos extends Component {
     componentDidMount (){
       axios.get('/api/repolist')
       .then(response => {
-        console.log(response.data);
         this.setState({
           repolist :  response.data.repolist,
           username :  response.data.username
         });
-  
      // catchでエラー時の挙動を定義する
       }).catch(err => {
         this.setState({
@@ -39,7 +37,7 @@ export default class Repos extends Component {
         list.push(
             <li>
               {i.password_flag && <img src={lock} className="icon"></img>}
-              <Link to={"/repodetail/" + i.name}>{i.name}</Link> 
+              <Link to={"/repo/" + i.name}>{i.name}</Link> 
               &nbsp;&nbsp;&nbsp;  
               {i.expire_flag && <span>閲覧期限:{i.expire}まで</span>}
             </li>

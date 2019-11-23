@@ -8,7 +8,7 @@ import doc from './doc.png';
 import folder from './folder.png';
 import RepoDetail from './repodetail';
 import Repos from './repo';
-
+import NoMatch from './404'
 
 const About = () => (
   <div><h2>About</h2></div>
@@ -19,13 +19,7 @@ const Topics = () => {
   )
 }
 
-const NoMatch = () =>{
-  return (
-    <div>
-      <h2>404 Not Found</h2>
-    </div>
-  );
-}
+
 const testtest = () =>{
   console.log(this);
 }
@@ -38,7 +32,6 @@ class GitHubLink extends Component {
   componentDidMount (){
     axios.get('/api/username')
     .then(response => {
-      console.log(response.data);
       this.setState({link : "https://github.com/" + response.data.username });
 
    // catchでエラー時の挙動を定義する
