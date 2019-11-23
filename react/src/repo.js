@@ -37,7 +37,7 @@ export default class Repos extends Component {
         list.push(
             <li>
               {i.password_flag && <img src={lock} className="icon"></img>}
-              <Link to={"/repo/" + i.name}>{i.name}</Link> 
+              <a href={"/repo/" + i.name}>{i.name}</a> 
               &nbsp;&nbsp;&nbsp;  
               {i.expire_flag && <span>閲覧期限:{i.expire}まで</span>}
             </li>

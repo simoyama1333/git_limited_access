@@ -75,7 +75,8 @@ export default class RepoDetail extends Component {
         }catch{}
       }else{
         let path = event.target.getAttribute("path");
-        console.log("path " + path);
+        this.requestFile(path);
+
       }
       setTimeout( ()=>{this.clickLimited  = false} ,100);
     }
@@ -97,6 +98,7 @@ export default class RepoDetail extends Component {
              code: code,
              path: path,
              tree: tree,
+             token: token,
              loading: false
             });
         }
@@ -109,6 +111,28 @@ export default class RepoDetail extends Component {
           });
           return 
         }
+        this.setState({
+          err :  true
+        });
+        console.log('err:', err);
+      });
+    }
+    
+    requestFile(path){
+      console.log(path);
+      console.log(this.state.token);
+      axios.post('/api/request',{
+        reponame: this.repon,
+        token: this.state.token,
+        path: path
+      })
+      .then(response => {
+        console.log(response.data);
+        this.setState({code: response.data.code,
+          path: path
+        });
+       // 失敗時は表示しない
+      }).catch(err => {
         this.setState({
           err :  true
         });

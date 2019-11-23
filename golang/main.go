@@ -26,6 +26,13 @@ type PostedJson struct {
 	Password string `json:"password"`
 	Token string  `json:"token"`
 }
+
+type PostedRequest struct{
+	Reponame string `json:"reponame"`
+	Token string  `json:"token"`
+	Path string `json:"path"`
+}
+
 type RetAuth struct {
 	Newtoken string `json:"newtoken"`
 	AuthResult bool `json:"authresult"`
@@ -54,6 +61,7 @@ func initRouting(e *echo.Echo) {
 	e.GET("/api/username", username)
 	e.GET("/api/repolist", repolist)
 	e.POST("/api/auth", auth)
+	e.POST("/api/request", request)
 	
 }
 func TimeToStr(t time.Time) string{
@@ -73,7 +81,7 @@ func alive(c echo.Context) error {
 func auth(c echo.Context) error {
 	post := new(PostedJson)
     if err := c.Bind(post); err != nil {
-        return c.JSON(http.StatusInternalServerError, map[string]string{"error": "json error"})
+        return c.JSON(http.StatusInternalServerError, map[string]string{"error": "json parse error"})
 	}
 	
 	info,err := git_mongo.GetRepoInfo(post.Reponame)
@@ -99,6 +107,10 @@ func auth(c echo.Context) error {
 		}
 	}else{
 		authok = git_mongo.CheckExistLoginToken(post.Reponame,post.Token)
+	}
+	//パスワード設定なしならauth通過
+	if info.Password == "" {
+		authok = true
 	}
 	if authok == true {
 		path := "README.md"
@@ -140,5 +152,40 @@ func repolist(c echo.Context) error{
 		repl.Repolist = append(repl.Repolist,info)		
 	}
 	return c.JSON(http.StatusOK, repl)
+	
+}
+func request(c echo.Context) error {
+	post := new(PostedRequest)
+    if err := c.Bind(post); err != nil {
+        return c.JSON(http.StatusInternalServerError, map[string]string{"error": "json parse error"})
+	}
+
+	info,err := git_mongo.GetRepoInfo(post.Reponame)
+	if err == mongo.ErrNoDocuments{
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "404"})
+	}
+	if err != nil {
+        return c.JSON(http.StatusInternalServerError, map[string]string{"error": "mongo error"})
+	}
+	if info.ExpireFlag != false && time.Now().Unix() > info.Expire.Unix()  {
+		return c.JSON(http.StatusNotFound, map[string]string{"error": "404"})
+	}
+
+	authok := git_mongo.CheckExistLoginToken(post.Reponame,post.Token)
+	//パスワード設定なしならauth通過
+	if info.Password == "" {
+		authok = true
+	}
+	if authok == true {
+		path := post.Path
+		file := git_mongo.GetFileAndDecode(path,os.Getenv("GIT_USERNAME"),post.Reponame,os.Getenv("GIT_TOKEN"))
+		if file == ""{
+			return c.JSON(http.StatusOK, map[string]string{"error": "404"})
+		}else{
+			return c.JSON(http.StatusOK, map[string]string{"code": file})
+		}
+	}else{
+		return c.JSON(http.StatusUnauthorized, map[string]string{"authresult": "false"})
+	}
 	
 }

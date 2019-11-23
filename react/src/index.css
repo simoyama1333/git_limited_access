@@ -59,4 +59,5 @@ li {
 .code{
   margin-left: 10%;
   margin-right: 10%;
+  word-wrap: break-word;
 }
