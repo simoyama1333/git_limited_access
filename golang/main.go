@@ -91,7 +91,7 @@ func auth(c echo.Context) error {
 	if err != nil {
         return c.JSON(http.StatusInternalServerError, map[string]string{"error": "mongo error"})
 	}
-	if info.ExpireFlag != false && time.Now().Unix() > info.Expire.Unix()  {
+	if info.ExpireFlag != false && time.Now().Unix() > info.Expire.AddDate(0,0,1).Unix()  {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "404"})
 	}
 	// tokenがない場合はパスワード
@@ -137,7 +137,8 @@ func repolist(c echo.Context) error{
 	repl.Username = username
 	repl.Repolist = []RepoInfoJson{}
 	for _ ,item := range repo {
-		if item.ExpireFlag != false && time.Now().Unix() > item.Expire.Unix()  {
+		//その日の開始0時に期限切れになるので、その日中はという日本語的解釈において実質的+1日する
+		if item.ExpireFlag == true && time.Now().Unix() > item.Expire.AddDate(0,0,1).Unix()  {
 			continue
 		}
 		info := RepoInfoJson{}
@@ -167,7 +168,7 @@ func request(c echo.Context) error {
 	if err != nil {
         return c.JSON(http.StatusInternalServerError, map[string]string{"error": "mongo error"})
 	}
-	if info.ExpireFlag != false && time.Now().Unix() > info.Expire.Unix()  {
+	if info.ExpireFlag == true && time.Now().Unix() > info.Expire.AddDate(0,0,1).Unix()  {
 		return c.JSON(http.StatusNotFound, map[string]string{"error": "404"})
 	}
 

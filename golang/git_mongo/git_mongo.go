@@ -109,12 +109,18 @@ func RepoCrawl(username string,_token string,reponame string,expire string,passw
 		}
 		expireflag = true
 	}
-
+	//パスワード設定なしの場合は空にする
+	var pass string
+	if password == "" {
+		pass = ""
+	}else{
+		pass = toHash(password)
+	}
     doc := RepoInfo {
         reponame,
-        expiretime,
-        expireflag,
-		toHash(password),
+		expiretime,
+		expireflag,
+		pass,
 		string(repojson),
 	}
 	err = RepoCheckAndDelete(reponame)

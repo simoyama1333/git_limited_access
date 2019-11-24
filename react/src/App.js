@@ -56,6 +56,7 @@ class App extends Component {
         <div>
         <nav>
         <Link to="/">Home</Link>
+        <a href="https://github.com/simoyama1333/git_limited_access/blob/master/README.md">About</a>
         <GitHubLink />
       </nav>
       <br></br>

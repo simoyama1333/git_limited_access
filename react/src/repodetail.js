@@ -158,11 +158,14 @@ export default class RepoDetail extends Component {
       if(this.state.code == ''){
         return NoMatch('File');
       }
+      //()つきurlをリンクにする
+      var reg = new RegExp("\\(((https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+))\\)","g");
+      let codeURLReplaced = this.state.code.replace(reg,"<a href='$1' target='_blank'>$1</a>");
       return(
         <div className="code">
           <img src={doc} className="icon"></img>
           {this.state.path}
-          <Code codeString={this.state.code}/>
+          <Code codeString={codeURLReplaced}/>
           </div>
       )
     }
