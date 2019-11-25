@@ -173,13 +173,10 @@ export default class RepoDetail extends Component {
       if(this.state.code == ''){
         return NoMatch('File');
       }
-      //()つきurlをリンクにする
       let codeURLReplaced = "404 or Binary File";
       if(this.state.code != null){
-        var reg = new RegExp("\\(((https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+))\\)","g");
-        codeURLReplaced = this.state.code.replace(reg,"<a href='$1' target='_blank'>$1</a>");
         //html escape
-        codeURLReplaced = codeURLReplaced.replace(/[&'`"<>]/g, (match) => {
+        codeURLReplaced = this.state.code.replace(/[&'`"<>]/g, (match) => {
           return {
             '&': '&amp;',
             "'": '&#x27;',
@@ -189,6 +186,9 @@ export default class RepoDetail extends Component {
             '>': '&gt;',
           }[match]
         });
+        //()つきurlをリンクにする
+        var reg = new RegExp("\\(((https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+))\\)","g");
+        codeURLReplaced = this.state.code.replace(reg,"<a href='$1' target='_blank'>$1</a>");
       }
       return(
         <div className="code">
