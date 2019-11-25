@@ -188,7 +188,7 @@ export default class RepoDetail extends Component {
         });
         //()つきurlをリンクにする
         var reg = new RegExp("\\(((https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+))\\)","g");
-        codeURLReplaced = this.state.code.replace(reg,"<a href='$1' target='_blank'>$1</a>");
+        codeURLReplaced = codeURLReplaced.replace(reg,"<a href='$1' target='_blank'>$1</a>");
       }
       return(
         <div className="code">
