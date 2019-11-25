@@ -32,7 +32,7 @@ expireとpasswordは任意です。設定しない場合、それらは無期限
   
 終わったらmainを実行してサーバーを立てます。完了です。  
   
-`./main`  
+`./main &`  
 `service nginx start`
 
 うまくいかなかった場合、ほぼReactの方に問題があるのでnodejsとnpmを入れて、  
