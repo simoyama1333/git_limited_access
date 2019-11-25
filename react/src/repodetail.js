@@ -20,7 +20,7 @@ export default class RepoDetail extends Component {
       super(props);
       this.repon =  this.props.match.params.reponame;
       this.clickLimited = false;
-      this.state = {value: '', needauth: true, repotree: null,failed: false,loading: true};
+      this.state = {value: '', needauth: true, repotree: null,failed: false,loading: true,path: ""};
       this.handleSubmit = this.handleSubmit.bind(this);
       this.handleChange = this.handleChange.bind(this);
       this.handleClick = this.handleClick.bind(this);
@@ -178,6 +178,17 @@ export default class RepoDetail extends Component {
       if(this.state.code != null){
         var reg = new RegExp("\\(((https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+))\\)","g");
         codeURLReplaced = this.state.code.replace(reg,"<a href='$1' target='_blank'>$1</a>");
+        //html escape
+        codeURLReplaced = codeURLReplaced.replace(/[&'`"<>]/g, (match) => {
+          return {
+            '&': '&amp;',
+            "'": '&#x27;',
+            '`': '&#x60;',
+            '"': '&quot;',
+            '<': '&lt;',
+            '>': '&gt;',
+          }[match]
+        });
       }
       return(
         <div className="code">

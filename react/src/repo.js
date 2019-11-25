@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import axios from 'axios'
-import { BrowserRouter as Link} from 'react-router-dom';
 import lock from './lock.png';
 import LoadingOrError from './loading';
 
