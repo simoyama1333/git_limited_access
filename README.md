@@ -20,10 +20,14 @@ MineSweeper3Dのパスワードは「Unity」です。
   
 公開したいリポジトリを登録します。GitHubトークンを予め発行しておいてください。  
 右上のSetting→Developer settings→Personal access tokensでリポジトリの権限をつけて発行です。  
-以下のコマンドでクローリングしてリポジトリの構造を取得します。  
+そして以下のように環境変数に入れてください。
   
 `export GIT_USERNAME="yourname"`  
-`export GIT_TOKEN="yourtoken"`  
+`export GIT_TOKEN="yourtoken"`
+  
+次に以下のコマンドでクローリングしてリポジトリの構造を取得します。  
+expireとpasswordは任意です。設定しない場合、それらは無期限、パスワードなしになります。  
+  
 `./repo/repo -repo yourrepo -expire 2020-02-02 -password yourpassword`  
   
 終わったらmainを実行してサーバーを立てます。完了です。  
