@@ -8,7 +8,7 @@ GitHubのプライベートリポジトリをパスワードや期限設定を�
 
 サンプルは[こちら](http://35.233.244.144/)  
 見ることのできるリポジトリはgit_limited_accessとMineSweeper3Dの2つです。  
-MineSweeper3Dのパスワードは「Unity」です。  
+MineSweeper3Dのパスワードは「unity」です。  
 フロントがReactでサーバーがGolangで動いています。DBはMongo  
 
 ### 使い方（local docker）  
