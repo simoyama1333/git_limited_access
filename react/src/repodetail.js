@@ -39,7 +39,15 @@ export default class RepoDetail extends Component {
       })
       .then(response => {
         let newtoken = response.data.newtoken;
-        this.setState({needauth: false});
+        let code = response.data.readme;
+        let path = response.data.path;
+        let tree = response.data.tree;
+        this.setState({needauth: false,
+          code: code,
+          path: path,
+          tree: tree,
+          token: newtoken
+        });
         window.localStorage.setItem(this.repon + "_token",newtoken)
      // catchでエラー時の挙動を定義する
       }).catch(err => {
@@ -111,8 +119,15 @@ export default class RepoDetail extends Component {
           });
           return 
         }
+        if(err.response.status == 401){
+          this.setState({
+            loading: false
+          });
+          return 
+        }
         this.setState({
-          err :  true
+          err :  true,
+          loading: false
         });
         console.log('err:', err);
       });
@@ -159,8 +174,11 @@ export default class RepoDetail extends Component {
         return NoMatch('File');
       }
       //()つきurlをリンクにする
-      var reg = new RegExp("\\(((https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+))\\)","g");
-      let codeURLReplaced = this.state.code.replace(reg,"<a href='$1' target='_blank'>$1</a>");
+      let codeURLReplaced = "404 or Binary File";
+      if(this.state.code != null){
+        var reg = new RegExp("\\(((https?|ftp)(:\/\/[-_.!~*\'()a-zA-Z0-9;\/?:\@&=+\$,%#]+))\\)","g");
+        codeURLReplaced = this.state.code.replace(reg,"<a href='$1' target='_blank'>$1</a>");
+      }
       return(
         <div className="code">
           <img src={doc} className="icon"></img>
