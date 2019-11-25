@@ -1,17 +1,17 @@
-# git_limited_access
+## git_limited_access
 
 GitHubのプライベートリポジトリをパスワードや期限設定をして公開するためのアプリケーションです。  
-不特定多数に公開はしたいが、パブリックで全世界には公開したくない。  
+不特定多数に公開はしたいが、パブリックで全世界には公開したくない。cloneなどもされたくはない。
 しかし不特定多数なので一人一人招待は無理という用途のために、GitHubにはそのような機能がなかったのでそのためのアプリケーションを作りました。  
   
-# サンプル
+### サンプル
 
 サンプルは[こちら](http://35.233.244.144/)  
 見ることのできるリポジトリはgit_limited_accessとMineSweeper3Dの2つです。  
 MineSweeper3Dのパスワードは「Unity」です。  
 フロントがReactでサーバーがGolangで動いています。DBはMongo  
 
-#　使い方（local docker）  
+### 使い方（local docker）  
   
 `bash init.sh`  
 `docker-compose up -d`  
@@ -30,3 +30,8 @@ MineSweeper3Dのパスワードは「Unity」です。
   
 `./main`
 `service nginx start`
+
+うまくいかなかった場合、ほぼReactの方に問題があるのでnodejsとnpmを入れて、
+`npm install`  
+`npm run buld`  
+をしてみてください。
