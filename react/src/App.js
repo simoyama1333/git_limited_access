@@ -56,7 +56,7 @@ class App extends Component {
         <div>
         <nav>
         <Link to="/">Home</Link>
-		<Link to="/repo/git_limited_access/">About</a>
+		<Link to="/repo/git_limited_access/">About</Link>
       </nav>
       <br></br>
           <Switch>
