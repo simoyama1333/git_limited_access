@@ -1,7 +1,7 @@
 import React from 'react';
 
-export default (errflag) => {
-    if(errflag){
+export default (loading) => {
+    if(loading){
       return (<div>Loading...</div>)
     }else{
       return (<div>Error occurred</div>)

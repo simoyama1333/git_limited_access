@@ -26,10 +26,10 @@ export default class Repos extends Component {
   
     render(){
       if(this.state.repolist == null){
-        return LoadingOrError(false);
+        return LoadingOrError(true);
       }
       if(this.state.err != null){
-        return LoadingOrError(true);
+        return LoadingOrError(false);
       }
       var list = [];
       {this.state.repolist.map((i) => {
@@ -45,7 +45,7 @@ export default class Repos extends Component {
   
       return (
         <div>
-          <h3>{this.state.username}'s Repository</h3>
+          <h3>Repository List</h3>
           {list}
         </div>
         )
